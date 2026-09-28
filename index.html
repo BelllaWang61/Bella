@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>25级舞蹈系 · 周代单元 · 学情分析总览</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #f5f2ec;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  padding: 1.5rem 1.5rem 2rem;
+  color: #2e241f;
+}
+.container { max-width: 1500px; margin: 0 auto; }
+
+/* 头部 */
+.header { text-align: center; margin-bottom: 1.8rem; }
+.header h1 {
+  font-size: 2rem; font-weight: 600; letter-spacing: 1px;
+  color: #4a3729; border-bottom: 3px solid #c9ad7a;
+  display: inline-block; padding-bottom: 0.4rem;
+}
+.header .sub { font-size: 0.95rem; color: #7b6b5a; margin-top: 0.4rem; }
+
+/* 标签页 */
+.tabs { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 2rem; flex-wrap: wrap; }
+.tab-btn {
+  background: #fff; border: 1px solid #e2d8cb; border-radius: 60px;
+  padding: 0.7rem 2rem; font-size: 1rem; font-weight: 500; color: #5b4a39;
+  cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 0.4rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+.tab-btn:hover { background: #faf8f5; border-color: #c9ad7a; }
+.tab-btn.active { background: #c9ad7a; color: #fff; border-color: #c9ad7a; }
+
+/* 视图 */
+.view { display: none; animation: fadeIn 0.25s ease; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 班级总览 */
+.stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; margin-bottom: 2rem; }
+.card {
+  background: #fff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  padding: 1.5rem 1.8rem; border: 1px solid #ede6dc;
+}
+.card-title { font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; color: #9b8a78; margin-bottom: 1rem; font-weight: 500; }
+.avg-score { font-size: 3.5rem; font-weight: 700; color: #4a3729; line-height: 1; }
+.avg-sub { font-size: 0.9rem; color: #a18e7a; margin-top: 0.3rem; }
+.top-list { list-style: none; margin-top: 0.3rem; }
+.top-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px dashed #e4dbd0; font-size: 1.1rem; }
+.top-list li:last-child { border-bottom: none; }
+.rank-badge {
+  background: #e9ddcd; border-radius: 50%; width: 28px; height: 28px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; color: #4e3e2e; font-size: 0.9rem; margin-right: 0.7rem;
+}
+.name { font-weight: 500; flex: 1; }
+.score { font-weight: 700; color: #7a5c3a; }
+
+.lists-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+.list-card {
+  background: #fff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  padding: 1.5rem 1.8rem; border: 1px solid #ede6dc;
+}
+.list-card h2 { font-size: 1.3rem; font-weight: 600; color: #4a3729; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem; }
+.list-card h2 span { background: #c9ad7a; color: #fff; border-radius: 40px; font-size: 0.85rem; padding: 0.2rem 0.9rem; font-weight: 500; }
+.student-grid-tags { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; max-height: 260px; overflow-y: auto; }
+.student-tag {
+  background: #f3efe8; padding: 0.35rem 1rem; border-radius: 40px; font-size: 0.95rem;
+  display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2d8cb;
+  color: #3d2f24; font-weight: 500; cursor: pointer; transition: 0.15s;
+}
+.student-tag:hover { background: #e9ddcd; border-color: #c9ad7a; }
+.student-tag .s-score { background: #c9ad7a; color: #fff; border-radius: 40px; padding: 0.1rem 0.5rem; font-size: 0.75rem; font-weight: 600; }
+
+.chart-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+.chart-card { background: #fff; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); padding: 1.2rem 1.2rem 1.5rem; border: 1px solid #ede6dc; }
+.chart-card h3 { font-size: 1.1rem; font-weight: 600; color: #5b4a39; margin-bottom: 0.8rem; text-align: center; }
+.canvas-wrapper { position: relative; height: 240px; width: 100%; }
+
+/* 个人详情 */
+.personal-controls {
+  display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center;
+  margin-bottom: 1.8rem; background: #fff; padding: 1rem 1.8rem; border-radius: 60px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #ede6dc;
+}
+.search-box { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px; }
+.search-box input {
+  border: 1px solid #e2d8cb; border-radius: 40px; padding: 0.6rem 1.2rem;
+  font-size: 0.95rem; width: 100%; max-width: 280px; outline: none;
+  background: #faf8f5; color: #2e241f; transition: 0.2s;
+}
+.search-box input:focus { border-color: #c9ad7a; background: #fff; box-shadow: 0 0 0 3px rgba(201,173,122,0.15); }
+.sort-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.sort-btn {
+  background: #f3efe8; border: 1px solid #e2d8cb; border-radius: 40px;
+  padding: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 500; color: #5b4a39;
+  cursor: pointer; transition: 0.2s; white-space: nowrap;
+}
+.sort-btn:hover { background: #e9ddcd; border-color: #c9ad7a; }
+.sort-btn.active { background: #c9ad7a; color: #fff; border-color: #c9ad7a; }
+
+.student-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px,1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.student-card {
+  background: #fff; border-radius: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  padding: 1.5rem 1.5rem 1.2rem; border: 1px solid #ede6dc;
+  transition: transform 0.15s, box-shadow 0.2s; display: flex; flex-direction: column;
+}
+.student-card:hover { box-shadow: 0 12px 28px rgba(0,0,0,0.08); transform: translateY(-2px); }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; border-bottom: 1px dashed #e4dbd0; padding-bottom: 0.8rem; }
+.student-info { display: flex; flex-direction: column; }
+.student-name { font-size: 1.3rem; font-weight: 600; color: #4a3729; display: flex; align-items: center; gap: 8px; }
+.student-id { font-size: 0.8rem; color: #a18e7a; margin-top: 2px; letter-spacing: 0.3px; }
+.student-class { font-size: 0.75rem; background: #f3efe8; padding: 0.2rem 0.8rem; border-radius: 40px; color: #7b6b5a; font-weight: 500; }
+.total-score-badge { background: #c9ad7a; color: #fff; border-radius: 40px; padding: 0.3rem 1rem; font-weight: 700; font-size: 1.2rem; line-height: 1.4; white-space: nowrap; }
+
+.metrics-row { display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.metric-item { flex: 1; min-width: 80px; background: #faf8f5; border-radius: 16px; padding: 0.6rem 0.5rem; text-align: center; border: 1px solid #f0e9e0; }
+.metric-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #9b8a78; font-weight: 500; }
+.metric-value { font-size: 1.1rem; font-weight: 700; color: #4a3729; margin-top: 2px; }
+.metric-value small { font-size: 0.7rem; font-weight: 400; color: #a18e7a; }
+
+.progress-section { margin: 0.8rem 0 1rem 0; }
+.progress-label { display: flex; justify-content: space-between; font-size: 0.8rem; color: #5b4a39; margin-bottom: 4px; font-weight: 500; }
+.progress-bar-bg { background: #f0e9e0; height: 8px; border-radius: 20px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 20px; background: #c9ad7a; transition: width 0.4s; }
+.progress-bar-fill.blue { background: #9bb0c0; }
+.radar-wrapper { position: relative; height: 180px; width: 100%; margin-top: 0.5rem; }
+.empty-message { grid-column: 1 / -1; text-align: center; color: #a18e7a; padding: 3rem; font-size: 1.1rem; }
+
+.footer-note { text-align: center; font-size: 0.8rem; color: #a18e7a; margin-top: 2rem; border-top: 1px solid #e4dbd0; padding-top: 1.5rem; }
+
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .lists-section, .chart-section { grid-template-columns: 1fr; }
+  .personal-controls { flex-direction: column; align-items: stretch; border-radius: 28px; }
+  .search-box input { max-width: 100%; }
+  .student-cards-grid { grid-template-columns: 1fr; }
+  .card-header { flex-direction: column; gap: 8px; }
+  .total-score-badge { align-self: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 头部 -->
+  <div class="header">
+    <h1>🏛️ 周代舞蹈 · 第二单元</h1>
+    <div class="sub">25级舞蹈系 · 中国舞蹈史线上课程 · 学情分析总览</div>
+  </div>
+
+  <!-- 标签页 -->
+  <div class="tabs">
+    <button class="tab-btn active" data-view="overview">📊 班级总览</button>
+    <button class="tab-btn" data-view="personal">👤 个人详情</button>
+  </div>
+
+  <!-- ========== 视图1：班级总览 ========== -->
+  <div class="view active" id="view-overview">
+    <div class="stats-grid">
+      <div class="card">
+        <div class="card-title">📊 班级平均分</div>
+        <div class="avg-score" id="avgScoreDisplay">—</div>
+        <div class="avg-sub">共 <span id="studentCount">0</span> 人 · 总分100分</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🏆 班级前三名</div>
+        <ul class="top-list" id="topThreeList"><li style="color:#a18e7a; justify-content:center;">加载中…</li></ul>
+      </div>
+      <div class="card">
+        <div class="card-title">✨ 高分段人数</div>
+        <div style="display:flex; gap:1.5rem; align-items:baseline; flex-wrap:wrap;">
+          <div><span style="font-size:2rem; font-weight:700; color:#4a3729;" id="above90Count">0</span> <span style="color:#7b6b5a;">≥90</span></div>
+          <div><span style="font-size:2rem; font-weight:700; color:#4a3729;" id="above85Count">0</span> <span style="color:#7b6b5a;">85-89</span></div>
+        </div>
+        <div class="avg-sub" style="margin-top:0.8rem;">最高分 <span id="maxScore">—</span> · 最低分 <span id="minScore">—</span></div>
+      </div>
+    </div>
+
+    <div class="lists-section">
+      <div class="list-card">
+        <h2>🌟 90分及以上 <span id="count90">0人</span></h2>
+        <div class="student-grid-tags" id="list90"></div>
+      </div>
+      <div class="list-card">
+        <h2>📌 85-89分 <span id="count85">0人</span></h2>
+        <div class="student-grid-tags" id="list85"></div>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <div class="chart-card">
+        <h3>📈 成绩分布柱状图</h3>
+        <div class="canvas-wrapper"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>🥧 各分数段占比</h3>
+        <div class="canvas-wrapper"><canvas id="pieChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 视图2：个人详情 ========== -->
+  <div class="view" id="view-personal">
+    <div class="personal-controls">
+      <div class="search-box">
+        <span style="color:#9b8a78;">🔍</span>
+        <input type="text" id="searchInput" placeholder="搜索姓名或学号…" autocomplete="off">
+      </div>
+      <div class="sort-buttons">
+        <button class="sort-btn active" data-sort="default">默认顺序</button>
+        <button class="sort-btn" data-sort="score-asc">总分 ↑</button>
+        <button class="sort-btn" data-sort="score-desc">总分 ↓</button>
+        <button class="sort-btn" data-sort="duration-asc">时长 ↑</button>
+        <button class="sort-btn" data-sort="duration-desc">时长 ↓</button>
+        <button class="sort-btn" data-sort="ai-asc">AI作品分 ↑</button>
+        <button class="sort-btn" data-sort="ai-desc">AI作品分 ↓</button>
+      </div>
+    </div>
+    <div class="student-cards-grid" id="studentGrid"></div>
+  </div>
+
+  <div class="footer-note">
+    数据基于《25级中国舞蹈史 第二周 周代单元 成绩数据.xlsx》· 点击班级总览中的学生姓名可跳转至个人详情
+  </div>
+</div>
+
+<script>
+(function() {
+  // ==================== 原始数据 ====================
+  // [学号, 姓名, 班级, 时长字符串, 总分, 第1题, 第2题, 第3题, 第4题, 第5题, 第6题]
+  const rawData = [
+    ["20254678","刘思妤","25舞蹈表演01","04时03分26秒",90,10,10,10,18,16,26],
+    ["20254679","李然","25舞蹈表演01","01时31分15秒",94,10,10,10,20,18,26],
+    ["20254680","童晶晶","25舞蹈表演01","01时15分26秒",86,10,10,10,18,14,24],
+    ["20254681","李婷婷","25舞蹈表演01","01时21分51秒",90,10,10,10,18,16,26],
+    ["20254682","钟馨怡","25舞蹈表演01","00时57分40秒",78,4,10,10,16,14,24],
+    ["20254683","陈佩瑜","25舞蹈表演01","01时46分14秒",92,10,10,10,20,16,26],
+    ["20254684","陈可欣","25舞蹈表演01","01时05分05秒",86,8,10,10,16,16,26],
+    ["20254685","李思彤","25舞蹈表演01","01时42分46秒",82,8,10,10,16,14,24],
+    ["20254686","王海青","25舞蹈表演01","01时15分00秒",78,6,10,10,16,12,24],
+    ["20254687","董光琦","25舞蹈表演01","02时43分03秒",94,null,10,10,null,null,28],
+    ["20254688","杨茵茵","25舞蹈表演01","01时24分10秒",82,10,10,10,14,14,24],
+    ["20254689","曾棋","25舞蹈表演01","01时32分07秒",88,null,10,10,null,null,28],
+    ["20254690","王思瑜","25舞蹈表演01","00时54分21秒",68,6,0,10,16,14,22],
+    ["20254691","张馨然","25舞蹈表演01","01时39分20秒",88,10,10,10,18,14,26],
+    ["20254692","吕瑶","25舞蹈表演01","01时42分29秒",90,10,10,10,18,16,26],
+    ["20254693","廖芙怡","25舞蹈表演01","02时19分36秒",78,10,10,10,16,12,20],
+    ["20254694","陈思琪","25舞蹈表演01","03时06分21秒",82,4,10,10,16,14,28],
+    ["20254695","邹子萌","25舞蹈表演01","01时59分24秒",86,8,10,10,16,14,28],
+    ["20254696","刘佳","25舞蹈表演01","00时50分20秒",80,8,10,10,16,12,24],
+    ["20254697","郑湘","25舞蹈表演01","04时28分42秒",84,6,10,10,16,14,28],
+    ["20254698","刘昕昳","25舞蹈表演01","01时01分56秒",94,8,10,10,20,18,28],
+    ["20254699","冯睿馨","25舞蹈表演01","00时55分42秒",72,6,10,10,14,10,22],
+    ["20254700","赵诗琪","25舞蹈表演01","00时42分58秒",80,8,10,10,16,14,22],
+    ["20254701","陈馨岚","25舞蹈表演01","01时28分01秒",88,8,10,10,18,18,24],
+    ["20254702","童铄淇","25舞蹈表演01","04时38分31秒",92,10,10,10,18,20,24],
+    ["20254703","刘语晨","25舞蹈表演01","01时12分56秒",76,8,10,10,16,10,22],
+    ["20254704","何妍","25舞蹈表演01","01时44分18秒",86,10,10,10,18,18,20],
+    ["20254705","王禹涵","25舞蹈表演01","02时07分03秒",88,10,10,10,18,18,22],
+    ["20254706","孙艺丹","25舞蹈表演01","01时05分34秒",82,6,10,10,null,null,24],
+    ["20254707","罗芷涵","25舞蹈表演01","01时54分38秒",86,10,10,10,16,16,24],
+    ["20254708","黄麟涵","25舞蹈表演01","00时58分22秒",86,10,10,10,18,14,24],
+    ["20254709","张炜静","25舞蹈表演01","01时20分37秒",82,8,10,10,16,14,24],
+    ["20254710","陈雅楠","25舞蹈表演01","01时51分31秒",80,8,10,10,16,12,24],
+    ["20254711","颜鸿鑫","25舞蹈表演02","01时26分24秒",88,10,10,10,16,14,28],
+    ["20254712","杨俊宇","25舞蹈表演02","02时02分04秒",68,8,10,10,16,10,14]
+  ];
+
+  function parseDuration(str) {
+    const m = str.match(/(\d+)时(\d+)分(\d+)秒/);
+    if (!m) return 0;
+    return parseInt(m[1],10)*3600 + parseInt(m[2],10)*60 + parseInt(m[3],10);
+  }
+  function formatDuration(sec) {
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    if (h>0) return `${h}时${m}分${s}秒`;
+    if (m>0) return `${m}分${s}秒`;
+    return `${s}秒`;
+  }
+
+  const students = rawData.map(item => {
+    const [id,name,className,durationStr,totalScore,q1,q2,q3,q4,q5,q6] = item;
+    const durationSec = parseDuration(durationStr);
+    return { id,name,className,durationStr,durationSec,totalScore,q1,q2,q3,q4,q5,q6 };
+  });
+
+  const totalStudents = students.length;
+  const scores = students.map(s => s.totalScore);
+  const sum = scores.reduce((a,b)=>a+b,0);
+  const avg = sum/totalStudents;
+  const maxScore = Math.max(...scores);
+  const minScore = Math.min(...scores);
+
+  const sorted = [...students].sort((a,b)=>b.totalScore-a.totalScore);
+  const topThree = sorted.slice(0,3);
+  const list90 = students.filter(s => s.totalScore>=90).sort((a,b)=>b.totalScore-a.totalScore);
+  const list85 = students.filter(s => s.totalScore>=85 && s.totalScore<90).sort((a,b)=>b.totalScore-a.totalScore);
+
+  // 分数段
+  const bins = [
+    { label:'90-100', min:90, max:100, color:'#9f7e5c', count:0 },
+    { label:'85-89', min:85, max:89.99, color:'#b99b7a', count:0 },
+    { label:'80-84', min:80, max:84.99, color:'#d1b89a', count:0 },
+    { label:'75-79', min:75, max:79.99, color:'#e6d3bc', count:0 },
+    { label:'70-74', min:70, max:74.99, color:'#f0e3d2', count:0 },
+    { label:'60-69', min:60, max:69.99, color:'#d9c6b2', count:0 },
+    { label:'<60', min:0, max:59.99, color:'#b8a18b', count:0 }
+  ];
+  students.forEach(s => {
+    for (let b of bins) {
+      if (s.totalScore >= b.min && s.totalScore <= b.max) { b.count++; break; }
+    }
+  });
+  const pieLabels = bins.filter(b=>b.count>0).map(b=>b.label);
+  const pieData = bins.filter(b=>b.count>0).map(b=>b.count);
+  const pieColors = bins.filter(b=>b.count>0).map(b=>b.color);
+  const barLabels = bins.map(b=>b.label);
+  const barData = bins.map(b=>b.count);
+  const barColors = bins.map(b=>b.color);
+
+  // ==================== 渲染班级总览 ====================
+  document.getElementById('avgScoreDisplay').textContent = avg.toFixed(1);
+  document.getElementById('studentCount').textContent = totalStudents;
+  document.getElementById('maxScore').textContent = maxScore;
+  document.getElementById('minScore').textContent = minScore;
+  document.getElementById('above90Count').textContent = list90.length;
+  document.getElementById('above85Count').textContent = list85.length;
+
+  const topThreeList = document.getElementById('topThreeList');
+  topThreeList.innerHTML = '';
+  topThree.forEach((stu,idx) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="rank-badge">${idx+1}</span>
+      <span class="name">${stu.name} <span style="font-size:0.8rem;color:#a18e7a;">${stu.className.slice(-2)}</span></span>
+      <span class="score">${stu.totalScore}分</span>`;
+    topThreeList.appendChild(li);
+  });
+
+  const list90Container = document.getElementById('list90');
+  document.getElementById('count90').textContent = `${list90.length}人`;
+  list90Container.innerHTML = '';
+  list90.forEach(stu => {
+    const tag = document.createElement('div');
+    tag.className = 'student-tag';
+    tag.innerHTML = `${stu.name} <span class="s-score">${stu.totalScore}</span>`;
+    tag.addEventListener('click', () => jumpToPersonal(stu.id));
+    list90Container.appendChild(tag);
+  });
+
+  const list85Container = document.getElementById('list85');
+  document.getElementById('count85').textContent = `${list85.length}人`;
+  list85Container.innerHTML = '';
+  list85.forEach(stu => {
+    const tag = document.createElement('div');
+    tag.className = 'student-tag';
+    tag.innerHTML = `${stu.name} <span class="s-score">${stu.totalScore}</span>`;
+    tag.addEventListener('click', () => jumpToPersonal(stu.id));
+    list85Container.appendChild(tag);
+  });
+
+  // 柱状图
+  new Chart(document.getElementById('barChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: barLabels,
+      datasets: [{
+        label: '学生人数',
+        data: barData,
+        backgroundColor: barColors,
+        borderRadius: 8,
+        barPercentage: 0.7
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0, color:'#5b4a39' }, grid: { color:'#ede6dc' } },
+        x: { ticks: { color:'#5b4a39', font:{ size:11 } }, grid: { display: false } }
+      }
+    }
+  });
+
+  // 饼图
+  new Chart(document.getElementById('pieChart').getContext('2d'), {
+    type: 'pie',
+    data: {
+      labels: pieLabels,
+      datasets: [{ data: pieData, backgroundColor: pieColors, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, color:'#4a3729', font:{ size:11 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+              const p = ((ctx.raw/total)*100).toFixed(1);
+              return `${ctx.label}: ${ctx.raw}人 (${p}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ==================== 渲染个人详情 ====================
+  const grid = document.getElementById('studentGrid');
+  const searchInput = document.getElementById('searchInput');
+  let currentSort = 'default';
+  let searchTerm = '';
+
+  const maxDuration = Math.max(...students.map(s => s.durationSec));
+  const maxTotalScore = Math.max(...students.map(s => s.totalScore));
+
+  function getFilteredAndSorted() {
+    let filtered = students.filter(s => {
+      if (!searchTerm) return true;
+      const t = searchTerm.toLowerCase();
+      return s.name.toLowerCase().includes(t) || s.id.includes(t);
+    });
+    switch (currentSort) {
+      case 'score-asc': filtered.sort((a,b)=>a.totalScore-b.totalScore); break;
+      case 'score-desc': filtered.sort((a,b)=>b.totalScore-a.totalScore); break;
+      case 'duration-asc': filtered.sort((a,b)=>a.durationSec-b.durationSec); break;
+      case 'duration-desc': filtered.sort((a,b)=>b.durationSec-a.durationSec); break;
+      case 'ai-asc': filtered.sort((a,b)=>(a.q6||0)-(b.q6||0)); break;
+      case 'ai-desc': filtered.sort((a,b)=>(b.q6||0)-(a.q6||0)); break;
+      default: filtered.sort((a,b)=>a.id.localeCompare(b.id)); break;
+    }
+    return filtered;
+  }
+
+  function renderCards() {
+    const list = getFilteredAndSorted();
+    grid.innerHTML = '';
+    if (list.length === 0) {
+      grid.innerHTML = '<div class="empty-message">😶 没有找到匹配的学生</div>';
+      return;
+    }
+    list.forEach(stu => {
+      const card = document.createElement('div');
+      card.className = 'student-card';
+      card.dataset.studentId = stu.id;
+
+      const durationScore = maxDuration>0 ? (stu.durationSec/maxDuration)*100 : 0;
+      const totalScoreNorm = (stu.totalScore/maxTotalScore)*100;
+      const aiScoreNorm = stu.q6 ? (stu.q6/30)*100 : 0;
+      const canvasId = `radar-${stu.id}`;
+
+      // 学情小结自动生成
+      let comment = '';
+      if (stu.totalScore >= 90) comment = '表现优秀，继续保持。';
+      else if (stu.totalScore >= 80) comment = '良好，注意查漏补缺。';
+      else if (stu.totalScore >= 70) comment = '中等，需加强薄弱环节。';
+      else comment = '需努力，重点提升。';
+      if (stu.q1 !== null && stu.q1 < 8) comment += ' 第1题读图能力待加强。';
+      if (stu.q4 !== null && stu.q4 < 16) comment += ' 第4题俯仰分析可深入。';
+      if (stu.q5 !== null && stu.q5 < 14) comment += ' 第5题拧转形态需巩固。';
+      if (stu.q6 !== null && stu.q6 < 24) comment += ' AI作品可优化细节。';
+
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="student-info">
+            <div class="student-name">${stu.name}</div>
+            <div class="student-id">${stu.id} · ${stu.className}</div>
+          </div>
+          <div class="total-score-badge">${stu.totalScore}分</div>
+        </div>
+        <div class="metrics-row">
+          <div class="metric-item">
+            <div class="metric-label">📖 观看页数</div>
+            <div class="metric-value">16<small>/16</small></div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">⏱️ 学习时长</div>
+            <div class="metric-value">${formatDuration(stu.durationSec)}</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">🎯 AI作品分</div>
+            <div class="metric-value">${stu.q6 !== null ? stu.q6 : '—'}<small>/30</small></div>
+          </div>
+        </div>
+        <div class="progress-section">
+          <div class="progress-label"><span>📚 总得分进度</span><span>${stu.totalScore}/100</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${stu.totalScore}%;"></div></div>
+        </div>
+        <div class="progress-section">
+          <div class="progress-label"><span>🎬 AI作品展示</span><span>${stu.q6 !== null ? stu.q6 : 0}/30</span></div>
+          <div class="progress-bar-bg"><div class="progress-bar-fill blue" style="width:${stu.q6 ? (stu.q6/30*100) : 0}%;"></div></div>
+        </div>
+        <div class="radar-wrapper">
+          <canvas id="${canvasId}"></canvas>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin-top: 0.8rem; font-size: 0.75rem; color: #7b6b5a;">
+          <span>第1题: ${stu.q1 ?? '—'}/10</span>
+          <span>第2题: ${stu.q2}/10</span>
+          <span>第3题: ${stu.q3}/10</span>
+          <span>第4题: ${stu.q4 ?? '—'}/20</span>
+          <span>第5题: ${stu.q5 ?? '—'}/20</span>
+          <span>第6题(AI): ${stu.q6 ?? '—'}/30</span>
+        </div>
+        <div style="margin-top:0.6rem; font-size:0.8rem; color:#5b4a39; background:#faf8f5; padding:0.5rem 0.8rem; border-radius:12px; border:1px solid #f0e9e0;">
+          <strong>学情小结：</strong>${comment}
+        </div>
+      `;
+
+      grid.appendChild(card);
+
+      // 绘制雷达图
+      setTimeout(() => {
+        const canvas = document.getElementById(canvasId);
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          new Chart(ctx, {
+            type: 'radar',
+            data: {
+              labels: ['学习时长', '总得分', 'AI作品'],
+              datasets: [{
+                data: [
+                  Math.min(durationScore, 100),
+                  Math.min(totalScoreNorm, 100),
+                  Math.min(aiScoreNorm, 100)
+                ],
+                backgroundColor: 'rgba(201, 173, 122, 0.25)',
+                borderColor: '#c9ad7a',
+                borderWidth: 2,
+                pointBackgroundColor: '#c9ad7a',
+                pointBorderColor: '#fff',
+                pointRadius: 3,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: (ctx) => {
+                      const label = ctx.label;
+                      const val = ctx.raw;
+                      if (label === '学习时长') return `学习时长: ${formatDuration(stu.durationSec)} (相对值${val.toFixed(0)}%)`;
+                      if (label === '总得分') return `总得分: ${stu.totalScore} (相对值${val.toFixed(0)}%)`;
+                      if (label === 'AI作品') return `AI作品: ${stu.q6 || 0}分 (相对值${val.toFixed(0)}%)`;
+                      return `${label}: ${val.toFixed(0)}%`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                r: {
+                  beginAtZero: true,
+                  max: 100,
+                  ticks: { display: false, stepSize: 25 },
+                  grid: { color: '#e4dbd0' },
+                  angleLines: { color: '#e4dbd0' },
+                  pointLabels: {
+                    color: '#5b4a39',
+                    font: { size: 10, weight: '500' }
+                  }
+                }
+              }
+            }
+          });
+        }
+      }, 0);
+    });
+  }
+
+  // 跳转到个人详情
+  window.jumpToPersonal = function(studentId) {
+    // 切换标签页
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      if (btn.dataset.view === 'personal') btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-personal').classList.add('active');
+    // 搜索该学生
+    searchInput.value = studentId;
+    searchTerm = studentId;
+    renderCards();
+    // 滚动到该卡片
+    setTimeout(() => {
+      const card = document.querySelector(`.student-card[data-student-id="${studentId}"]`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
+  // 事件监听：搜索
+  searchInput.addEventListener('input', (e) => {
+    searchTerm = e.target.value.trim();
+    renderCards();
+  });
+
+  // 事件监听：排序按钮
+  const sortButtons = document.querySelectorAll('.sort-btn');
+  sortButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sortButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentSort = btn.dataset.sort;
+      renderCards();
+    });
+  });
+
+  // 标签页切换
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const viewId = 'view-' + btn.dataset.view;
+      document.getElementById(viewId).classList.add('active');
+      if (btn.dataset.view === 'personal') {
+        // 确保个人卡片已渲染
+        if (grid.children.length === 0) renderCards();
+      }
+    });
+  });
+
+  // 初始渲染个人卡片（但默认隐藏，渲染好备用）
+  renderCards();
+
+})();
+</script>
+</body>
+</html>
